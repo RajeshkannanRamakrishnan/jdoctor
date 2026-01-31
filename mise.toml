@@ -1,0 +1,14 @@
+[tools]
+go = "1.23.12"
+
+[tasks.build]
+description = "Build the jdoctor CLI"
+run = "mkdir -p bin && go build -o bin/jdoctor cmd/jdoctor/main.go"
+
+[tasks.run]
+description = "Run the jdoctor CLI"
+run = "./jdoctor"
+
+[tasks.test]
+description = "Run all tests"
+run = "go test ./..."
