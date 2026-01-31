@@ -1,6 +1,6 @@
 # Binaries
 bin/
-jdoctor
+/jdoctor
 
 # OS specific
 .DS_Store
