@@ -61,9 +61,44 @@ func ScanVulnerabilities(deps []Dependency) ([]ScanResult, error) {
 		return nil, nil
 	}
 
-	// Prepare batch request
-	reqBody := OSVRequest{Queries: make([]OSVQuery, len(deps))}
-	for i, d := range deps {
+	// Initialize cache
+	cache, err := NewVulnCache()
+	if err == nil {
+		_ = cache.Load()
+	}
+
+	var results []ScanResult
+	var uncachedDeps []Dependency
+
+	// Check cache
+	for _, d := range deps {
+		// Use PURL-like key: pkg:maven/group/artifact@version
+		key := fmt.Sprintf("pkg:maven/%s/%s@%s", d.GroupId, d.ArtifactId, d.Version)
+		
+		if cache != nil {
+			if vulns, hit := cache.Get(key); hit {
+				// Cache hit
+				if len(vulns) > 0 {
+					results = append(results, ScanResult{
+						Dependency: d,
+						Vulns:      vulns,
+					})
+				}
+				continue
+			}
+		}
+		
+		// Cache miss
+		uncachedDeps = append(uncachedDeps, d)
+	}
+
+	if len(uncachedDeps) == 0 {
+		return results, nil // All served from cache
+	}
+
+	// Query OSV for uncached dependencies
+	reqBody := OSVRequest{Queries: make([]OSVQuery, len(uncachedDeps))}
+	for i, d := range uncachedDeps {
 		reqBody.Queries[i] = OSVQuery{
 			Package: OSVPackage{
 				Name:      fmt.Sprintf("%s:%s", d.GroupId, d.ArtifactId),
@@ -94,15 +129,27 @@ func ScanVulnerabilities(deps []Dependency) ([]ScanResult, error) {
 		return nil, fmt.Errorf("failed to decode OSV response: %w", err)
 	}
 
-	// Map results back to dependencies
-	var results []ScanResult
+	// Process results and update cache
 	for i, res := range osvResp.Results {
+		originalDep := uncachedDeps[i]
+		key := fmt.Sprintf("pkg:maven/%s/%s@%s", originalDep.GroupId, originalDep.ArtifactId, originalDep.Version)
+
+		// Update cache (store even if empty to avoid re-querying safe packages)
+		if cache != nil {
+			cache.Set(key, res.Vulns)
+		}
+
 		if len(res.Vulns) > 0 {
 			results = append(results, ScanResult{
-				Dependency: deps[i],
+				Dependency: originalDep,
 				Vulns:      res.Vulns,
 			})
 		}
+	}
+
+	// Save cache
+	if cache != nil {
+		_ = cache.Save()
 	}
 
 	return results, nil
