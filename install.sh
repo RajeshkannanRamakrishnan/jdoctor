@@ -2,7 +2,7 @@
 
 # Configuration
 APP_NAME="jdoctor"
-INSTALL_DIR="$HOME/bin"
+INSTALL_DIR="$HOME/.local/bin"
 SRC_DIR="./cmd/jdoctor"
 
 # Colors
@@ -34,7 +34,7 @@ mv "$APP_NAME" "$INSTALL_DIR/"
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     echo -e "${RED}WARNING: $INSTALL_DIR is not in your PATH.${NC}"
     echo "Please add the following line to your shell configuration file (.bashrc, .zshrc, etc.):"
-    echo "export PATH=\"\$HOME/bin:\$PATH\""
+    echo "export PATH=\"\$HOME/.local/bin:\$PATH\""
 else
     echo -e "${GREEN}$APP_NAME installed successfully!${NC}"
     echo "You can now run '$APP_NAME' from anywhere."
