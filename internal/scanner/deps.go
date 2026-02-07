@@ -22,7 +22,8 @@ type Conflict struct {
 	Versions []string `json:"versions"`
 }
 
-func ScanDeps() ([]Conflict, error) {
+// GetProjectDependencies returns a list of dependencies from pom.xml
+func GetProjectDependencies() ([]Dependency, error) {
 	// MVP: Only checks pom.xml in current directory
 	file, err := os.Open("pom.xml")
 	if err != nil {
@@ -40,8 +41,17 @@ func ScanDeps() ([]Conflict, error) {
 		return nil, fmt.Errorf("failed to parse pom.xml: %w", err)
 	}
 
+	return project.Dependencies, nil
+}
+
+func ScanDeps() ([]Conflict, error) {
+	deps, err := GetProjectDependencies()
+	if err != nil {
+		return nil, err
+	}
+
 	versionMap := make(map[string][]string)
-	for _, dep := range project.Dependencies {
+	for _, dep := range deps {
 		key := fmt.Sprintf("%s:%s", dep.GroupId, dep.ArtifactId)
 		versionMap[key] = append(versionMap[key], dep.Version)
 	}
