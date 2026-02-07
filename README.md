@@ -67,7 +67,23 @@ cd /path/to/my-java-project
 jdoctor repl
 ```
 
-### 5. Dependency Analysis
+### 5. Security Audit 🔒 (NEW)
+Scan your project for vulnerabilities in both **dependencies** and **source code**.
+
+```bash
+jdoctor audit
+```
+
+**What it checks:**
+1.  **Dependencies**: Scans `pom.xml` libraries against the [OSV.dev](https://osv.dev) database for known CVEs (e.g., Log4Shell).
+2.  **Source Code (SAST)**: Scans `.java` files for security risks:
+    - 🔑 Hardcoded Secrets (API keys, passwords, tokens)
+    - 💉 SQL Injection risks
+    - 🐚 Command Injection risks
+    - 🔓 Weak Cryptography (MD5/SHA-1)
+    - ☁️ Leaked Cloud Credentials (AWS/Google keys)
+
+### 6. Dependency Analysis
 Check for conflicts in your `pom.xml`:
 ```bash
 jdoctor deps
