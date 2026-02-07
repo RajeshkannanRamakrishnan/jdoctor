@@ -165,29 +165,39 @@ public class CheckSSL {
 }
 `
 	tmpDir := os.TempDir()
-	tmpFile := filepath.Join(tmpDir, "CheckSSL.java")
+	// Use a unique name to avoid conflicts if running multiple times? 
+	// actually for simplicity let's keep CheckSSL.java but maybe in a unique subdir if parallel?
+	// For CLI tool, standard temp dir with fixed name is risky if concurrent. 
+	// Let's use a temp dir for the file.
+	runDir, err := os.MkdirTemp(tmpDir, "jdoctor-ssl-*")
+	if err != nil {
+		return false, fmt.Errorf("failed to create temp dir: %w", err)
+	}
+	defer os.RemoveAll(runDir) // Clean up everything
+
+	tmpFile := filepath.Join(runDir, "CheckSSL.java")
 	if err := os.WriteFile(tmpFile, []byte(javaCode), 0644); err != nil {
 		return false, fmt.Errorf("failed to write temp java file: %w", err)
 	}
-	// defer os.Remove(tmpFile) // Optional: keep for debug? clean up usually good.
 
-	// Run with java 11+ single-file source code support
-	// or compile and run for older versions. 
-	// Let's assume 'java' is in path and supports single file (Java 11+) which is common now.
-	// We can check java version first or just try. 
-	
-	// Note: We need to strip port if provided for URL construction in Java code above if we strictly use https://host
-	// But host argument to this function might be "google.com:443". 
-	// URL("https://google.com:443") is valid.
-	
-	cmd := exec.Command("java", tmpFile, host)
-	output, err := cmd.CombinedOutput()
+	// 1. Compile: javac CheckSSL.java
+	compileCmd := exec.Command("javac", tmpFile)
+	if out, err := compileCmd.CombinedOutput(); err != nil {
+		return false, fmt.Errorf("javac failed: %s, output: %s", err, string(out))
+	}
+
+	// 2. Run: java -cp . CheckSSL <host>
+	// Note: We need to strip port from host if provided, but URL constructor handles host:port fine usually.
+	runCmd := exec.Command("java", "-cp", runDir, "CheckSSL", host)
+	output, err := runCmd.CombinedOutput()
 	
 	if err != nil {
-		// If java fails to run (e.g. older java), we might want to try javac + java
-		// For now, let's treat execution failure as "not trusted" or "error"
 		return false, fmt.Errorf("java check failed: %s, output: %s", err, string(output))
 	}
 	
+	if !strings.Contains(string(output), "OK") {
+		return false, fmt.Errorf("unexpected output from java check: %s", string(output))
+	}
+
 	return true, nil
 }
