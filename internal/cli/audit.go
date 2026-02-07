@@ -20,34 +20,54 @@ var auditCmd = &cobra.Command{
 			return
 		}
 
+		var results []scanner.ScanResult
+
 		if len(deps) == 0 {
 			fmt.Println("⚠ No dependencies found in pom.xml to scan.")
-			return
-		}
+		} else {
+			fmt.Printf("🔍 Scanning %d dependencies against OSV database...\n", len(deps))
+			results, err = scanner.ScanVulnerabilities(deps)
+			if err != nil {
+				fmt.Printf("❌ Vulnerability scan failed: %v\n", err)
+				os.Exit(1)
+			}
 
-		fmt.Printf("🔍 Scanning %d dependencies against OSV database...\n", len(deps))
-		results, err := scanner.ScanVulnerabilities(deps)
-		if err != nil {
-			fmt.Printf("❌ Vulnerability scan failed: %v\n", err)
-			os.Exit(1)
-		}
-
-		if len(results) == 0 {
-			fmt.Println("✔ No known vulnerabilities found in direct dependencies.")
-			return
-		}
-
-		fmt.Printf("\n🚨 Found vulnerabilities in %d packages:\n", len(results))
-		for _, res := range results {
-			fmt.Printf("\n📦 %s:%s@%s\n", res.Dependency.GroupId, res.Dependency.ArtifactId, res.Dependency.Version)
-			for _, v := range res.Vulns {
-				fmt.Printf("   ❌ [%s] %s\n", v.ID, v.Summary)
-				// fmt.Printf("      Details: %s\n", v.Details) // Details can be very long
+			if len(results) == 0 {
+				fmt.Println("✔ No known vulnerabilities found in direct dependencies.")
+			} else {
+				fmt.Printf("\n🚨 Found vulnerabilities in %d packages:\n", len(results))
+				for _, res := range results {
+					fmt.Printf("\n📦 %s:%s@%s\n", res.Dependency.GroupId, res.Dependency.ArtifactId, res.Dependency.Version)
+					for _, v := range res.Vulns {
+						fmt.Printf("   ❌ [%s] %s\n", v.ID, v.Summary)
+					}
+				}
 			}
 		}
-		
-		fmt.Println("\nRun 'jdoctor audit' regularly to stay safe!")
-		os.Exit(1) // Exit with error code if vulns found
+
+		// --- 2. Source Code SAST Scan ---
+		fmt.Println("\n🔍 Scanning source code for security patterns...")
+		cwd, _ := os.Getwd()
+		sastVulns, err := scanner.ScanSourceCode(cwd)
+		if err != nil {
+			fmt.Printf("⚠️ Source scan had errors: %v\n", err)
+		} else {
+			if len(sastVulns) == 0 {
+				fmt.Println("✔ No suspicious coding patterns found in .java files.")
+			} else {
+				fmt.Printf("\n🚨 Found %d potential security issues in source code:\n", len(sastVulns))
+				for _, v := range sastVulns {
+					fmt.Printf("   ❌ [%s] %s\n", v.Severity, v.ID)
+					fmt.Printf("      File: %s:%d\n", v.File, v.Line)
+					fmt.Printf("      Code: %s\n", v.Match)
+					fmt.Printf("      -> %s\n\n", v.Description)
+				}
+			}
+		}
+
+		if len(results) > 0 || len(sastVulns) > 0 {
+			os.Exit(1)
+		}
 	},
 }
 
