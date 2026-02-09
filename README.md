@@ -6,11 +6,13 @@ It acts as a comprehensive health check for your Java development setup, ensurin
 
 ## Features
 
-- **🔍 Full System Diagnosis**: Checks Java version, OS details, build tool health (Maven/Gradle), and dependency conflicts.
-- **🔐 SSL/TLS Analysis**: detailed analysis of SSL certificates for any host, including validation against local Java truststores to detect corporate proxy/MITM issues.
+- **🔍 Full System Diagnosis (`doctor`)**: Checks Java version, OS details, build tool health (Maven/Gradle), and dependency conflicts.
+- **🔐 SSL/TLS Analysis (`ssl`)**: Detailed analysis of SSL certificates, including validation against local Java truststores to detect corporate proxy/MITM issues.
 - **☕ Java Process List (`ps`)**: Enhanced process listing specifically for Java applications, showing uptime and summarized arguments.
 - **🐚 Project REPL (`repl`)**: Launches `jshell` with your project's classpath pre-loaded (Maven/Gradle), allowing you to experiment with your project's code interactively.
-- **📦 Dependency Scan (`deps`)**: Scans `pom.xml` for potential duplicate or conflicting dependencies.
+- **📦 Dependency Diagnosis (`deps`)**: Scans `pom.xml` or `build.gradle` for potential duplicate or conflicting dependencies.
+- **🛡️ Security Audit (`audit`)**: Scans dependencies (CVEs) and source code (SAST) for vulnerabilities.
+- **📊 System Report (`report`)**: Generates a JSON report of the system health for automation.
 
 ## Installation
 
@@ -84,9 +86,15 @@ jdoctor audit
     - ☁️ Leaked Cloud Credentials (AWS/Google keys)
 
 ### 6. Dependency Analysis
-Check for conflicts in your `pom.xml`:
+Check for conflicts in your `pom.xml` or `build.gradle`:
 ```bash
 jdoctor deps
+```
+
+### 7. JSON Report
+Generate a machine-readable health report:
+```bash
+jdoctor report --json
 ```
 
 ## Contributing

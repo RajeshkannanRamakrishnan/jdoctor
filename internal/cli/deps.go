@@ -9,7 +9,7 @@ import (
 
 var depsCmd = &cobra.Command{
 	Use:   "deps",
-	Short: "Check for dependency conflicts (Maven only for now)",
+	Short: "Check for dependency conflicts (Maven/Gradle)",
 	Run: func(cmd *cobra.Command, args []string) {
 		conflicts, err := scanner.ScanDeps()
 		if err != nil {
