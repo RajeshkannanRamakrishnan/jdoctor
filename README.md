@@ -12,6 +12,7 @@ It acts as a comprehensive health check for your Java development setup, ensurin
 - **🐚 Project REPL (`repl`)**: Launches `jshell` with your project's classpath pre-loaded (Maven/Gradle), allowing you to experiment with your project's code interactively.
 - **📦 Dependency Diagnosis (`deps`)**: Scans `pom.xml` or `build.gradle` for potential duplicate or conflicting dependencies.
 - **🛡️ Security Audit (`audit`)**: Scans dependencies (CVEs) and source code (SAST) for vulnerabilities.
+- **♻️ GC Monitor (`gc`)**: Real-time TUI dashboard for monitoring Java Garbage Collection and Heap usage.
 - **📊 System Report (`report`)**: Generates a JSON report of the system health for automation.
 
 ## Installation
@@ -91,7 +92,17 @@ Check for conflicts in your `pom.xml` or `build.gradle`:
 jdoctor deps
 ```
 
-### 7. JSON Report
+### 7. Real-Time GC Monitor
+Launch a live dashboard to monitor Heap and GC activity for a specific Java process:
+```bash
+# First, find the PID
+jdoctor ps
+
+# Then monitor it
+jdoctor gc monitor <PID>
+```
+
+### 8. JSON Report
 Generate a machine-readable health report:
 ```bash
 jdoctor report --json
