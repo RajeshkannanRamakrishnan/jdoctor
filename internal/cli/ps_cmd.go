@@ -26,8 +26,8 @@ var psCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "PID\tUPTIME\tNAME\tARGS (Summarized)")
-		fmt.Fprintln(w, "---\t------\t----\t-----------------")
+		fmt.Fprintln(w, "PID\tUPTIME\tPATH/MAIN\tARGS (Summarized)")
+		fmt.Fprintln(w, "---\t------\t---------\t-----------------")
 
 		for _, p := range processes {
 			// Summarize args to avoid spamming the terminal

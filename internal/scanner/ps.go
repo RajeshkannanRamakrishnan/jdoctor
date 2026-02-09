@@ -14,8 +14,8 @@ type JavaProcess struct {
 }
 
 func ScanJavaProcesses() ([]JavaProcess, error) {
-	// 1. Run jps -v to get PID, Name, and JVM Args
-	cmd := exec.Command("jps", "-v")
+	// 1. Run jps -lv to get PID, Long Name (Path), and JVM Args
+	cmd := exec.Command("jps", "-lv")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("failed to run jps: %w. Ensure JDK is installed and in PATH", err)
@@ -38,12 +38,18 @@ func ScanJavaProcesses() ([]JavaProcess, error) {
 		pid := parts[0]
 		remaining := parts[1]
 
-		// Split Name and Args
-		// jps output usually looks like: PID Name [Args...]
-		// But Name can be a full class path or Jar path.
-		// If args start with -, the first part is the name.
-		// This is a bit tricky, relying on space separation can be flaky but standard for jps.
-
+		// PID LongName [Args...]
+		// If LongName contains spaces (e.g. path with spaces), jps might be tricky.
+		// But usually jps outputs: PID MainClass Args
+		// or PID /path/to/jar Args
+		
+		// Heuristic: The start of args is usually marked by -D or -X or start of options.
+		// But standard apps might use args without -. 
+		// Simpler heuristic: The second part is the Name/Path until the first space 
+		// UNLESS the path itself has spaces? jps usually handles paths with spaces by quoting?
+		// Actually jps output is space delimited. If path has spaces, it might break.
+		// Let's assume standard space separation for now.
+		
 		var name string
 		var argsStr string
 		
@@ -55,18 +61,15 @@ func ScanJavaProcesses() ([]JavaProcess, error) {
 			name = remaining[:spaceIdx]
 			argsStr = remaining[spaceIdx+1:]
 		}
-		
-		// If name is "Jps", skip it (don't list the scanner itself ideally, or keep it?)
-		// Let's keep it for accuracy, but user might filter it.
 
 		args := strings.Fields(argsStr)
 		
-		// 2. Get Uptime for this PID
+		// 2. Get Uptime
 		uptime := getUptime(pid)
 
 		processes = append(processes, JavaProcess{
 			PID:    pid,
-			Name:   name,
+			Name:   name, // This is now the Long Name (Full Path or Package)
 			Args:   args,
 			Uptime: uptime,
 		})
