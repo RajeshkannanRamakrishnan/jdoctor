@@ -33,11 +33,12 @@ type OSVResult struct {
 }
 
 type Vulnerability struct {
-	ID       string    `json:"id"`
-	Summary  string    `json:"summary"`
-	Details  string    `json:"details"`
-	Severity []Severity `json:"severity"`
-	References []Reference `json:"references"`
+	ID         string       `json:"id"`
+	Summary    string       `json:"summary"`
+	Details    string       `json:"details"`
+	Severity   []Severity   `json:"severity"`
+	References []Reference  `json:"references"`
+	Affected   []Affected   `json:"affected"`
 }
 
 type Severity struct {
@@ -48,6 +49,25 @@ type Severity struct {
 type Reference struct {
 	Type string `json:"type"`
 	URL  string `json:"url"`
+}
+
+type Affected struct {
+	Package  OSVPackage `json:"package"`
+	Ranges   []Range    `json:"ranges"`
+	Versions []string   `json:"versions"`
+	Severity []Severity `json:"severity"`
+}
+
+type Range struct {
+	Type   string       `json:"type"`
+	Events []RangeEvent `json:"events"`
+}
+
+type RangeEvent struct {
+	Introduced   string `json:"introduced,omitempty"`
+	Fixed        string `json:"fixed,omitempty"`
+	LastAffected string `json:"last_affected,omitempty"`
+	Limit        string `json:"limit,omitempty"`
 }
 
 type ScanResult struct {

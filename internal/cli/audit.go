@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"jdoctor/internal/scanner"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -40,6 +41,18 @@ var auditCmd = &cobra.Command{
 					fmt.Printf("\n📦 %s:%s@%s\n", res.Dependency.GroupId, res.Dependency.ArtifactId, res.Dependency.Version)
 					for _, v := range res.Vulns {
 						fmt.Printf("   ❌ [%s] %s\n", v.ID, v.Summary)
+						if severity := formatSeverity(v); severity != "" {
+							fmt.Printf("      Severity: %s\n", severity)
+						}
+						if fixed := extractFixedVersions(v); len(fixed) > 0 {
+							fmt.Printf("      Fixed Versions: %s\n", strings.Join(fixed, ", "))
+						}
+						if refs := extractReferenceURLs(v); len(refs) > 0 {
+							fmt.Println("      References:")
+							for _, r := range refs {
+								fmt.Printf("        - %s\n", r)
+							}
+						}
 					}
 				}
 			}
@@ -73,4 +86,75 @@ var auditCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(auditCmd)
+}
+
+func formatSeverity(v scanner.Vulnerability) string {
+	seen := make(map[string]bool)
+	var items []string
+
+	addSeverity := func(s scanner.Severity) {
+		if s.Type == "" && s.Score == "" {
+			return
+		}
+		label := s.Type
+		if label == "" {
+			label = "Severity"
+		}
+		value := s.Score
+		if value == "" {
+			return
+		}
+		entry := fmt.Sprintf("%s: %s", label, value)
+		if !seen[entry] {
+			seen[entry] = true
+			items = append(items, entry)
+		}
+	}
+
+	for _, s := range v.Severity {
+		addSeverity(s)
+	}
+	if len(items) == 0 {
+		for _, a := range v.Affected {
+			for _, s := range a.Severity {
+				addSeverity(s)
+			}
+		}
+	}
+
+	return strings.Join(items, ", ")
+}
+
+func extractFixedVersions(v scanner.Vulnerability) []string {
+	seen := make(map[string]bool)
+	var fixed []string
+	for _, a := range v.Affected {
+		for _, r := range a.Ranges {
+			for _, e := range r.Events {
+				if e.Fixed == "" {
+					continue
+				}
+				if !seen[e.Fixed] {
+					seen[e.Fixed] = true
+					fixed = append(fixed, e.Fixed)
+				}
+			}
+		}
+	}
+	return fixed
+}
+
+func extractReferenceURLs(v scanner.Vulnerability) []string {
+	seen := make(map[string]bool)
+	var refs []string
+	for _, r := range v.References {
+		if r.URL == "" {
+			continue
+		}
+		if !seen[r.URL] {
+			seen[r.URL] = true
+			refs = append(refs, r.URL)
+		}
+	}
+	return refs
 }
