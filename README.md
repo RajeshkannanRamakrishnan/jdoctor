@@ -7,6 +7,7 @@ It acts as a comprehensive health check for your Java development setup, ensurin
 ## Features
 
 - **🔍 Full System Diagnosis (`doctor`)**: Checks Java version, OS details, build tool health (Maven/Gradle), and dependency conflicts.
+- **☕ JDK Audit (`jdk`)**: Detects installed JDKs, active `JAVA_HOME`, `java` resolution from `PATH`, and configuration mismatches.
 - **🔐 SSL/TLS Analysis (`ssl`)**: Detailed analysis of SSL certificates, including validation against local Java truststores to detect corporate proxy/MITM issues.
 - **☕ Java Process List (`ps`)**: Enhanced process listing specifically for Java applications, showing uptime and summarized arguments.
 - **🐚 Project REPL (`repl`)**: Launches `jshell` with your project's classpath pre-loaded (Maven/Gradle), allowing you to experiment with your project's code interactively.
@@ -39,7 +40,19 @@ jdoctor doctor
 - Maven/Gradle version and health.
 - Dependency conflict summary.
 
-### 2. SSL Diagnosis
+### 2. JDK Audit
+Inspect installed JDKs and verify that `JAVA_HOME` and your shell `PATH` agree:
+```bash
+jdoctor jdk
+```
+**Output includes:**
+- Active `JAVA_HOME` and resolved real path.
+- The `java` executable selected from `PATH`.
+- Ordered `PATH` Java candidates.
+- Discovered JDK installations with version/vendor details.
+- Warnings for invalid or mismatched JDK setup.
+
+### 3. SSL Diagnosis
 Diagnose connection issues to a remote host. Useful for debugging "PKIX path building failed" errors.
 
 **Basic Check:**
@@ -57,20 +70,20 @@ jdoctor ssl diagnose google.com
 - **Trust validation against local Java truststore**.
 - Expiration checks and MITM detection (e.g., Zscaler, BlueCoat).
 
-### 3. Smart Process List
+### 4. Smart Process List
 List running Java processes with readable output:
 ```bash
 jdoctor ps
 ```
 
-### 4. Interactive REPL
+### 5. Interactive REPL
 Start a JShell session with your current project's dependencies loaded:
 ```bash
 cd /path/to/my-java-project
 jdoctor repl
 ```
 
-### 5. Security Audit 🔒 (NEW)
+### 6. Security Audit 🔒 (NEW)
 Scan your project for vulnerabilities in both **dependencies** and **source code**.
 
 ```bash
@@ -86,13 +99,13 @@ jdoctor audit
     - 🔓 Weak Cryptography (MD5/SHA-1)
     - ☁️ Leaked Cloud Credentials (AWS/Google keys)
 
-### 6. Dependency Analysis
+### 7. Dependency Analysis
 Check for conflicts in your `pom.xml` or `build.gradle`:
 ```bash
 jdoctor deps
 ```
 
-### 7. Real-Time GC Monitor
+### 8. Real-Time GC Monitor
 Launch a live dashboard to monitor Heap and GC activity for a specific Java process:
 ```bash
 # First, find the PID
@@ -102,7 +115,7 @@ jdoctor ps
 jdoctor gc monitor <PID>
 ```
 
-### 8. JSON Report
+### 9. JSON Report
 Generate a machine-readable health report:
 ```bash
 jdoctor report --json
